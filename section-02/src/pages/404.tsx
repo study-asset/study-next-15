@@ -1,13 +1,3 @@
-import { useEffect } from "react";
-
-import { useRouter } from "next/router";
-
 export default function Page() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.push("/");
-  }, []);
-
-  return <></>;
+  return <div>존재하지 않는 페이지입니다.</div>;
 }
