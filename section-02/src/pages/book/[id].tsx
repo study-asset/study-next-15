@@ -1,14 +1,18 @@
-import { useRouter } from "next/router";
-
-import books from "@/mock/books.json";
-import type { BookData } from "@/types";
-
 import style from "./[id].module.css";
+import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import fetchOneBook from "@/lib/fetch-one-book";
 
-const mockData: BookData = books[0];
+export const getServerSideProps = async (context: GetServerSidePropsContext) => {
+  const id = context.params!.id;
+  const book = await fetchOneBook(Number(id));
 
-export default function Page() {
-  const { title, subTitle, description, author, publisher, coverImgUrl } = mockData;
+  return { props: { book } };
+};
+
+export default function Page({ book }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  if (!book) return "문제가 발생하였습니다. 다시 시도해 주세요.";
+
+  const { title, subTitle, description, author, publisher, coverImgUrl } = book;
 
   return (
     <div className={style.container}>
