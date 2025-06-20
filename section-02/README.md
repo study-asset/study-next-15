@@ -251,3 +251,42 @@ export default function App({
 App 컴포넌트에서 페이지를 실행할 때, getLayout이 없는 컴포넌트의 undefined을 함수로 실행하려고 할 수 있다.
 
 이 경우 에러가 발생하며, getLayout 메서드가 없는 경우 ?? 예외 처리를 진행해서 자체적인 page node를 반환한다.
+
+## getServerSideProps ( SSR ) 처리
+
+컴포넌트를 불러오는 중에 getServerSideProps 라는 이름으로 함수를 상단에 선언하면,  
+서버에서 화면을 렌더링하면서 필요한 데이터를 미리 가져와 화면을 구성하고 전달하는 형태로 기능 설정이 가능하다.
+
+사용 방법은 간단하다. 아래 예시로 작성해 보겠다.
+
+```
+export const getServerSideProps = () => {
+  // 컴포넌트보다 먼저 실행 후, 컴포넌트에 필요한 데이터를 불러오는 함수 ( SSR 방식 )
+
+  return {
+    props: {
+      data: "",
+    },
+  };
+};
+
+export default function Home({ data }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  return (
+    // ... JSX.Element
+  );
+}
+
+Home.getLayout = (page: ReactNode) => {
+  return <SearchableLayout>{page}</SearchableLayout>;
+};
+
+```
+
+이런 식으로 서버에서 미리 페칭을 진행하고 Response 로 받은 { props: Object } 형태의 데이터를 컴포넌트로 전달할 수 있다.  
+전달된 데이터는 바로 컴포넌트에서 처리하고 렌더링된 화면을 클라이언트로 보내 렌더링하게 된다.
+
+그런데, props로 전달된 data 값의 type을 추론하려면 어떻게 해야할까?  
+그 방법은 Next에서 자체 제공하는 InferGetServerSidePropsType 타입을 활용하면 된다.
+
+이 타입을 활용할 경우, 해당 컴포넌트 상단에 위치한 getServerSideProps의 반환 값을 추론하여 타입을 제공해 주는 형식이다.  
+이건 그냥 자동으로 되는 것이 아닌 제네릭으로 해당 함수를 typeof로 반환 값을 알려주어야 한다.
