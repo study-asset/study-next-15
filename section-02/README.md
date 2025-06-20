@@ -205,3 +205,49 @@ API를 구축할 수 있는 기능이다.
 이 기능을 활용할 경우, 백엔드에 요청하는 방법처럼 간단한 데이터를 직접 처리할 수 있다.
 
 pages/api 폴더에 작성된 파일을 기준으로 요청에 대한 값을 함수 내부에서 req, res 매개변수로 응답할 수 있다.
+
+## 페이지 별 레이아웃 설정
+
+페이지 별 레이아웃을 설정하기 위해서는 \_app.tsx가 아닌 각 페이지를 담당하는 파일에서 처리해야 한다.
+
+처리 방법으로는 각 페이지 별 함수에 메서드를 추가한다. 이때 메서드 이름은 알아보기 쉬운 용어로 작성한다.
+
+```
+export default function Page() {
+    return <h1>Title</h1>
+}
+
+Page.getLayout = (page: ReactNode) => {
+    return <SearchableLayout>{page}</SearchableLayout>
+}
+```
+
+그리고 App 컴포넌트에서 컴포넌트를 실행하면서 getLayout 메서드를 같이 실행하여 레이아웃을 반환하도록 한다.
+
+```
+import GlobalLayout from "@/components/global-layout";
+import "@/styles/globals.css";
+
+import type { ReactNode } from "react";
+import type { NextPage } from "next";
+import type { AppProps } from "next/app";
+
+type NextPageWithLayout = NextPage & {
+  getLayout?: (page: ReactNode) => ReactNode;
+};
+
+export default function App({
+  Component,
+  pageProps,
+}: AppProps & { Component: NextPageWithLayout }) {
+  const getLayout = Component.getLayout ?? ((page: ReactNode) => page);
+
+  return <GlobalLayout>{getLayout(<Component {...pageProps} />)}</GlobalLayout>;
+}
+
+```
+
+여기서 getLayout은 개별적으로 메서드를 추가했기 때문에 getLayout이 없는 컴포넌트의 경우,  
+App 컴포넌트에서 페이지를 실행할 때, getLayout이 없는 컴포넌트의 undefined을 함수로 실행하려고 할 수 있다.
+
+이 경우 에러가 발생하며, getLayout 메서드가 없는 경우 ?? 예외 처리를 진행해서 자체적인 page node를 반환한다.

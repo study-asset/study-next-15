@@ -1,7 +1,5 @@
-.title {
-  color: red;
-}
-
-.subTitle {
-  color: blue;
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
