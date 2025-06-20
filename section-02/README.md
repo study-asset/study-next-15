@@ -20,7 +20,7 @@ Pages 아래 디렉토리 혹은 파일을 원하는 페이지 이름으로 작�
 // Directory : src/pages/search/index.tsx
 // URL : http://localhost:3000/search?q=1
 
-import { useRouter } = "next/router";
+import { useRouter } from "next/router";
 
 export default function Page() {
     const router = useRouter();
@@ -41,7 +41,7 @@ export default function Page() {
 // Directory : src/pages/book/[id].tsx
 // URL : http://localhost:3000/book/1
 
-import { useRouter } = "next/router";
+import { useRouter } from "next/router";
 
 export default function Page() {
     const router = useRouter();
@@ -60,7 +60,7 @@ export default function Page() {
 // Directory : src/pages/book/[...id].tsx
 // URL : http://localhost:3000/book/1/2/3/4/5
 
-import { useRouter } = "next/router";
+import { useRouter } from "next/router";
 
 export default function Page() {
     const router = useRouter();
@@ -80,7 +80,7 @@ export default function Page() {
 Directory : src/pages/book/[[id]].tsx
 URL : http://localhost:3000/book
 
-import { useRouter } = "next/router";
+import { useRouter } from "next/router";
 
 export default function Page() {
     const router = useRouter();
@@ -108,3 +108,63 @@ exprot default Page() {
     return <h1>존재하지 않는 페이지입니다.</h1>
 }
 ```
+
+## 페이지간 이동을 위한 Navigation 바 생성
+
+페이지 간 이동은 anchor 태그가 아닌 next 에서 지원하는 Link 컴포넌트를 사용한다.  
+Link 컴포넌트는 Anchor와 같은 사용법과 동일하고 페이지 이동을 담당한다.
+
+```
+import "@/styles/globals.css";
+import type { AppProps } from "next/app"
+import Link from "next/link";
+
+export default function App({ Component, pageProps }: AppProps) {
+    return (
+        <>
+            <header>
+                <Link href={"/"}>index</Link>
+                <Link href={"/search?q=1"}>Search</Link>
+                <Link href={"/book/1"}>Book</Link>
+            </header>
+            <Component {...pageProps}>
+        </>
+    )
+}
+```
+
+## Programmatic Navigation
+
+특정 버튼이 클릭되거나 특정 조건이 만족되었을 때, 함수 내부에서 페이지를 이동하는 방식
+
+```
+import "@/styles/globals.css";
+import type { AppProps } from "next/app"
+import Link from "next/link";
+import { useRouter } from "next/router";
+
+export default function App({ Component, pageProps }: AppProps) {
+    const router = useRouter();
+
+    const onClick = () => {
+        router.push("/test");
+    }
+
+    return (
+        <>
+            <header>
+                <Link href={"/"}>index</Link>
+                <Link href={"/search?q=1"}>Search</Link>
+                <Link href={"/book/1"}>Book</Link>
+                <div>
+                    <button onClick={onClick}>/test 페이지로 이동</button>
+                </div>
+            </header>
+            <Component {...pageProps}>
+        </>
+    )
+}
+```
+
+router의 push 메서드를 제외하고도 뒤로가기를 방지하며 페이지를 이동하는 replace 혹은 ..  
+페이지를 뒤로 이동하는 back 메서드가 있다.
