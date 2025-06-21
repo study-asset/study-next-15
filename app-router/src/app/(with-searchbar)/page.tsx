@@ -3,9 +3,12 @@ import style from "./page.module.css";
 import BookItem from "@/components/book-item";
 import { BookData } from "@/types";
 
+// export const dynamic = "auto";
+// 특정 페이지의 유형을 강제로 Static, Dynamic 페이지로 설정
+
 async function AllBooks() {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/book`, {
-    cache: "no-store",
+    cache: "force-cache",
   });
 
   if (!response.ok) {

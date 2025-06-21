@@ -6,7 +6,9 @@ import Link from "next/link";
 import { BookData } from "@/types";
 
 async function Footer() {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/book`);
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/book`, {
+    cache: "force-cache",
+  });
 
   if (!response.ok) {
     return <footer>제작 @jiwooproity</footer>;
