@@ -2,10 +2,16 @@
 
 Next JS 관련 기초부터 활용까지 다시 경험을 늘려보고자 생성한 저장소입니다.
 
-## 출처
+## Next 프로젝트 생성
 
-사실 Next JS를 혼자서 프로젝트를 만들어 가며 사용해 본 적은 많지만,  
-이정환 님이 내주신 프로젝트 강의를 보고 어느 부분에서의 구현의 차이가 발생할 지  
-내가 지금껏 부족했던 부분이 무엇이 있을 지 뒤돌아 보고자 학습하려고 합니다.
+### pages-router
 
-URL: https://www.inflearn.com/course/한입-크기-nextjs
+```
+npx create-next-app@14 {project-name}
+```
+
+### app-router
+
+```
+npx create-next-app@latest {project-name}
+```
