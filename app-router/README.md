@@ -1,36 +1,265 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## App Router
 
-## Getting Started
+Pages router 와는 다르게 app 폴더 하위로 존재하는 폴더명들을 각 페이지로 취급한다.  
+그리고 각 폴더에 page.tsx 파일을 생성하면 페이지로서 동작 준비가 완료된다.
 
-First, run the development server:
+## App Router의 Catch all segment
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Pages Router와 동일하게 [...id].tsx or [...id] > page.tsx 로 작성하여 사용할 수 있다.
+
+하지만 상위 폴더에 page.tsx 가 없다면 404가 발생하게 되는데,,  
+이 경우에는 대괄호를 두개 붙여 Optional Catch All Segment 로 [[...id]] > page.tsx 를 작성하면 대응이 가능하다.
+
+결과로는 예를 들어 book id만 가져오고 book 페이지에는 page.tsx를 할당하지 않았을 경우,  
+Optional Catch All Segement 로 작성하면 id가 없든 있든 다음 id 페이지로 안내해주고 모든 구간의 id의 가져올 수 있다.
+
+```
+http://localhost:3000/book [0]
+or
+http://localhost:3000/book/1/2/3 [1]
+
+// Optional Catch All Segment
+// Result [0] : id []
+// Result [1] : id [1, 2, 3]
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## App Router의 Layout 시스템
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Layout은 기존 페이지를 덮는 하나의 레이어 시스템이다.  
+Layout을 설정하고자 하는 페이지에 layout.tsx 를 생성하게 되면, children 하위 노드를 가져올 수 있고,  
+Layout을 설정하면 모든 하위 페이지는 해당 Layout Element 들이 적용된다.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+즉, Search > layout.tsx 를 설정할 경우 하위 모든 페이지는 layout.tsx가 적용된다.  
+또한, 상위에만 layout.tsx 적용이 되는 게 아니라, 모든 페이지에 적용이 가능하고 중첩 적용된다.
 
-## Learn More
+```
+---------------------------------
+| layout.tsx                    |
+|   -------------------------   |
+|   |                       |   |
+|   | page.tsx              |   |
+|   |                       |   |
+|   -------------------------   |
+|                               |
+---------------------------------
+```
 
-To learn more about Next.js, take a look at the following resources:
+## App Router 내 소괄호를 적용한 폴더 ( Route Group )
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+(with-searchbar) 와 같이 소괄호를 입력할 경우, 경로 상에 영향을 미치지 않는다.  
+이러한 것을 Route Group이라고 부른다.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+즉, 각기 다른 경로를 갖는 페이지들을 소괄호를 포함한 경로에 넣어주면 그룹으로 묶어줄 수 있다.  
+그러면 layout과 같은 파일을 해당 폴더에 담아주면 그룹으로 묶인 페이지만 별개의 디자인을 입힐 수 있다.
 
-## Deploy on Vercel
+예를 들어, (with-searchbar) > page.tsx / (with-searchbar) > search > layou.tsx, page.tsx 처럼  
+그룹으로 묶어 layout을 관리하거나 별개의 처리를 할 수 있게 된다.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## React Server Component
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+브라우저에서는 실행이 불가능하고 서버 측에서만 실행이 가능한 컴포넌트이다.  
+이 서버 컴포넌트는 React V18 버전부터 등장했다.
+
+### Server Component 등장 배경
+
+서버에서 렌더링을 진행하여 브라우저 측에 보내 HTML을 렌더링했다.
+
+그 과정에서 번들을 내려주는데 상호작용이 없는 JS 번들 파일까지 내려주면서 .. ( Hydration을 위한 )
+FCP 이후에 TTI까지 걸리는 시간이 지연되는 문제점이 발생했다.
+
+따라서, 서버에서만 실행하는 컴포넌트로서 브라우저 측에서 실행이 필요 없게 처리하여 TTI 문제를 개선했다.
+
+### 권장사항
+
+보통은 페이지의 대부분을 서버 컴포넌트로 구성할 것을 권장하고,  
+클라이언트 컴포넌트는 꼭 필요한 경우에만 구성할 필요가 있다.
+
+결과적으로 클라이언트 컴포넌트로서 서버에서 보내주어야할 번들이 줄어들기에  
+브라우저에서의 TTI 속도를 개선해 줄 수 있다.
+
+### 주의사항
+
+1. 서버 컴포넌트에는 브라우저에서 실행될 코드가 포함되면 안된다.
+
+```
+// src/app/page.tsx
+
+export default function Home() {
+    const [state, setState] = useState(""); // 사용 불가
+
+    return <div>Main Page</div>
+}
+```
+
+2. 클라이언트 컴포넌트는 클라이언트에서만 실행되지 않는다.
+
+   - 사전 렌더링 ( pre-rendering) 을 위해 서버에서 1번 실행
+   - 하이드레이션을 위해 브라우저에서 1번 실행
+   - 즉, 서버와 클라이언트에서 모두 실행이 되어 총 2번 실행된다.
+
+3. 클라이언트 컴포넌트에서는 서버 컴포넌트를 import 할 수 없다.
+
+   - 둘 다 서버에서 한번 실행되지만, 서버 컴포넌트의 경우 서버에서만 실행되어야 하기에 불가능
+   - Hydration 하는 경우, 서버 컴포넌트는 서버로부터 내려주지 않기에 존재하지 않는 코드로 인식되어 에러 발생
+
+4. 서버 컴포넌트에서 클라이언트 컴포넌트에게 직렬화 되지 않는 Props는 전달 불가하다.
+
+   - 직렬화 ( serialization ) 객체, 배열, 클래스 등의 복잡한 구조의 데이터를 단순한 형태로 변환하는 것
+   - 직렬화 예 : {"name":"지우","age":25}
+   - 함수는 직렬화가 불가능 함
+
+```
+export default function ServerComponent() {
+   function func() {
+      console.log("험수 직렬화 x");
+   };
+
+   return <ClientComponent func={func} /> // Runtime error
+}
+```
+
+## 사전 렌더링 과정
+
+1. 서버 컴포넌트, 클라이언트 컴포넌트 상관하지 않고 서버에서 전부 실행
+2. RSC Payload 진행 ( 먼저 서버 컴포넌트들만 따로 실행을 진행 )
+
+   - React Server Component의 순수한 데이터 ( 결과물 )
+   - React Server Component를 직렬화 한 결과
+   - 알아보기 힘든 복잡한 구조를 띔
+   - 포함 데이터
+     - 서버 컴포넌트 렌더링 결과
+     - 연결된 클라이언트 컴포넌트의 위치
+     - 클라이언트 컴포넌트에게 전달하는 Props 값
+
+3. 완성된 HTML 페이지 생성 후, 브라우저 전달
+
+따라서 서버 컴포넌트에서 클라이언트 컴포넌트로 직렬화가 불가능한 함수를 전달 할 경우,  
+Runtime error가 발생하게 된다.
+
+즉, 전달이 필요한 경우 함수를 제외하고 직렬화가 가능한 오브젝트를 전달하거나  
+혹은 브라우저에서만 실행될 코드가 담기지 않은 서버 컴포넌트를 전달하면 문제 없음.
+
+children node를 통해 전달하여 결과 값만을 전달하는 방식을 권장.
+
+### Client Component에 Server Component를 사용해야하는 경우 ..
+
+클라이언트 컴포넌트에 children으로 서버 컴포넌트를 넘겨주는 구조로 설정하면 된다.  
+그러면 클라이언트로 변경하여 오류가 발생하는 경우가 없고 직접 실행할 필요 없이 결과물만 렌더링하게 된다.
+
+## Client Component 적용하기
+
+서버 컴포넌트의 경우, 서버에서 단 1회만 실행되기 때문에,  
+useEffect와 같은 훅을 사용할 수 없다. 즉, 브라우저에서만 실행이 되는 코드는 불가능하다는 것 ..
+
+사용을 위해서는 컴포넌트 코드 상단에 "use client"를 입력하여 클라이언트 컴포넌트로 설정해야 한다.
+
+## 페이지 이동은 Client Side Rendering 방식으로 처리된다.
+
+Page Router 버전과 동일하게 CSR 방식으로 렌더링 처리가 된다.
+
+하지만, 서버 컴포넌트가 추가되어 조금은 다른 방식으로 진행된다.
+
+JS Bundle과 RSC Payload를 전달하게 된다는 점이다.
+
+번들에는 상호 작용이 필요한 클라이언트 컴포넌트를 보내고, 서버 컴포넌트를 RSC Payload 과정을 거쳐  
+데이터를 전달하게 된다. 즉, 서버 컴포넌트는 사전 렌더링을 위해 RSC Payload로 필요한 정보를 보내게 된다.
+
+그리고 서버 컴포넌트가 클라이언트 컴포넌트를 포함한 경우,  
+해당 페이지로 이동하여 관리자 도구에 Network 탭에서 받은 데이터들을 보면 RSC의 서버 컴포넌트와 ..  
+번들 파일을 지닌 Client Component를 전달받는 모습을 확인 해 볼 수 있다.
+
+## App Router 에서의 pre-fetching ( 사전 렌더링 ) 동작
+
+서버 컴포넌트가 추가됨으로서 RSC Payload로 직렬화된 데이터와 클라이언트 컴포넌트로 이루어지는 번들 파일을  
+다운로드하는 모습을 볼 수 있다.
+
+동적인 경로인 페이지의 경우, 브라우저가 요청할 때마다 생성될 동적인 페이지라서 RSC 정보로 전달하게 된다.
+
+빌드 시, 빌드 타임에 생성하면 안될 내용들이 담긴 컴포넌트는 다이나믹한 페이지로 설정이 되어 SSR 방식처럼  
+처리가 되고, 그 외 정적인 화면인 페이지들은 기본 값인 SSG 방식으로 빌드된다.
+
+## App Router 에서의 데이터 페칭
+
+App Router에서는 서버 컴포넌트로 인해 데이터 페칭에도 영향이 있었다.
+
+기존에는 getServerSideProps와 같은 방법으로 페칭하여 다음 페이지로 정보를 전달했는데,  
+이것은 서버 컴포넌트라는 개념이 존재하지 않았기에 이러한 형태로 작성해야 했다.
+
+이제는 Page 함수 안에서 자체적으로 페칭이 가능하기에  
+getServerSideProps와 같은 함수로 먼저 페칭하고 props로 넘겨줄 필요가 없어졌다.
+
+```
+export default function ServerComponent() {
+   const data = fetch("...");
+   const response = data.json();
+
+   return <div></div>
+}
+```
+
+클라이언트 컴포넌트에서는 Async 키워드를 지원하지 않았는데,  
+브라우저에서 동작할 경우, 메모이제이션 차원에서 문제를 일으킬 가능성이 있었다.
+
+이제는 비동기적으로 컴포넌트에서 직접 fetch 메서드를 활용할 수 있게 되었다.  
+즉, getServerSideProps, getStaicProps를 사용할 필요가 없어진 것.
+
+## 데이터 캐시 ( Data Cache )
+
+fetch 메서드를 활용해 불러온 데이터를 Next 서버에서 보관하는 기능  
+영구적으로 데이터를 보관하거나, 특정 시간을 주기로 갱신 시키는 것이 가능
+
+결론적으로 불 필요한 데이터의 요청의 수를 줄여 웹 서비스의 성능을 개선할 수 있다.
+
+```
+const response = await fetch("~/api", { cache: "force-cache" });
+
+// 옵션 값 : cache: "force-cache", cache: "no-store", next: { revalidate: 10 }, next: { tags: ['a'] }
+```
+
+다양한 추가적인 옵션으로 캐시 설정을 할 수 있다.  
+하지만, axios와 같은 외부 라이브러리로는 사용이 불가능하고 Next에서 자체적으로 지원하기에 fetch를 활용해야 한다.
+
+각 캐시 정보를 확인하는 방법은 next.config.js의 logging: { fetches: { fullUrl: true } } 로 설정 할 경우 확인 할 수 있다.  
+캐시된 정보는 (cache hit) 혹은 (cache skip) 으로 표현된다.
+
+그리고 기본적으로 "no-store" 값으로 적용되니 참고할 것.
+
+### { cache: "no-store" }
+
+캐시 정보를 저장하지 않는다는 의미의 옵션이다.  
+매번 새로운 정보를 백엔드로 요청을 보내게 된다. 재활용할 데이터가 없기에 매번 갱신이 되게 된다.
+
+### { cache: "force-cache" }
+
+캐시 정보를 처음에는 존재하지 않기에 MISS가 발생하고, 데이터 요청 후 SET 작업을 통해 캐시에 저장한다.  
+이후로 동일한 서버 URL로 요청 시, 데이터 캐시에서 찾아 HIT을 발생시키고 기존 캐시 데이터를 불러오게 된다.
+
+### next: { revalidate: 10 }
+
+10초 후 기존 캐시 데이터는 STALE 상태로 변화시키고 일단 그 데이터를 전달한다.  
+이후 다시 SET 작업을 통해 캐시에 저장하고 다음부터는 HIT으로 새로 저장된 캐시 데이터를 전달하게 된다.
+
+### next: { tags: ['a'] }
+
+On-Demand Revalidate ISR와 같은 방식으로 실행된다.  
+요청이 들어왔을 때 데이터를 최신화하게 된다.
+
+예를 들어, 기존 On-Demand Revalidate의 경우 요청이 들어오면 지정된 링크의 HTML 파일을 재생성하게 되어  
+최신화를 진행한다.
+
+이것처럼 tags를 설정해 두면 해당 tags의 값으로 API 요청이 들어오면 해당 tags 를 가진 API 정보를 캐시 데이터에  
+새로운 데이터를 넣어주어 업데이트해 주는 방식인 것이다.
+
+## Request Memoization
+
+뜻은 "요청을 기억한다" 라는 의미인데, 중복적으로 발생하는 요청들을 캐싱해서 딱 한번만 전달하도록 데이터 페칭을 최적화 해 주는 기능이다.
+
+예를 들어, fetch(`~/api/A`) 로 서버로 데이터 요청을 보냈을 경우, 처음엔 백엔드 서버로 요청을 보낸다.  
+이후, 데이터를 받아오는 과정에 리퀘스트 메모이제이션 영역에 SET 처리를 진행하여 기억을 해 두고,  
+동일한 API로 요청을 왔을 경우, 서버까지 가지 않고 리퀘스트 메모이제이션 영역에서 HIT 처리가 되어 데이터를 재활용하여 렌더링한다.
+
+하지만 이건 기존 데이터 캐시와는 엄연히 다르다.  
+중복된 API 요청을 캐싱하기 위해 존재하기 때문에 렌더링이 완료되면 모든 리퀘스트 메모이제이션의 캐시는 삭제된다.
+
+즉, 서버가 가동 중에는 데이터 캐시에는 캐시된 데이터가 영구적으로 저장되지만,
+리퀘스트 메모이제이션 캐시 영역에 저장된 캐시는 API 요청 후 렌더링이 완료되면 데이터는 모두 삭제된다.
