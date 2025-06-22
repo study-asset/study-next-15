@@ -1,10 +1,15 @@
+import { Suspense } from "react";
+
 import BookItem from "@/components/book-item";
+import BookListSkeleton from "@/components/skeleton/book-list-skeleton";
+
 import { BookData } from "@/types";
+import { delay } from "@/utils/delay";
 
 // export const dynamic = "force-static";
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q } = await searchParams;
+async function SearchResult({ q = "" }: { q: string | undefined }) {
+  await delay(2);
 
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/book/search?q=${q}`, {
     cache: "force-cache",
@@ -22,5 +27,15 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ q
         <BookItem key={book.id} {...book} />
       ))}
     </div>
+  );
+}
+
+export default async function Page({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q } = await searchParams;
+
+  return (
+    <Suspense key={q || ""} fallback={<BookListSkeleton count={3} />}>
+      <SearchResult q={q} />
+    </Suspense>
   );
 }
