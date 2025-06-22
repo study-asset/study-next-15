@@ -506,3 +506,122 @@ export default function Page() {
 
 action props인 saveName을 실행할 경우, "use server" 를 통해 Next 서버에서 실행되는 서버 액션을 사용할 수 있다.  
 따라서, 서버에서 실행되는 코드로 서버에서만 처리가 가능한 DB 액션 혹은 SQL 쿼리문 실행이 가능해진다.
+
+## revalidate 재검즘
+
+Next에서 제공하는 next/cache의 revalidatePath 를 사용하여 링크를 입력하면 해당 페이지의 상태를 재검증하고,  
+새롭게 해당 페이지를 렌더링한다.
+
+```
+revalidatePath(`/book/${bookId}`);
+```
+
+주의사항으로는 서버 측에서만 호출이 가능하기에 서버 액션 내부 혹은 서버 컴포넌트 내부에서만 호출 할 수 있다.  
+또한, revalidatePath는 입력한 주소의 모든 렌더링 정보를 초기화하는 점이 있다.
+
+그리고 풀 라우트 캐시에 저장되지도 않기에 정적 페이지가 업데이트 되지는 않는다.  
+다만, 다음 접속 시에는 Dynamic 페이지처럼 업데이트 된다.
+
+## revalidatePath의 옵션
+
+1. page
+
+   - 특정 경로의 모든 동적 페이지를 재검증
+   - 주소 입력 시, 해당 페이지 컴포넌트가 작성된 파일의 경로를 명시해 주어야 함.
+   - EX ) "/book/[id]"
+
+2. layout
+
+   - 특정 레이아웃이 갖는 모든 페이지 재검증
+   - 라우트 그룹의 이름까지 작성하여 명시해 준다.
+   - EX ) "/(with-searchbar)"
+
+3. layout
+
+   - 모든 데이터 재검증도 가능
+   - EX ) "/"
+
+## revalidateTag("tag") 재검증
+
+태그 기준, 데이터 캐시 재검증을 진행할 수 있다.
+
+fetch의 옵션 중에 next : { tags: [""] } 옵션을 활용해서 해당 페이지에 대한 정보를 담은 태그를 작성하고,  
+revalidateTag() 메서드 안에 해당 태그를 입력하여 재검증을 요청할 수 있다.
+
+```
+// 태그 입력
+const response = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}/review/book/${bookId}`, {
+   next: { tags: [`review-${bookId}`] },
+});
+
+// 태그 재검증
+revalidateTag(`review-${bookId}`);
+
+```
+
+## 클라이언트 컴포넌트에서의 서버 액션
+
+useActionState 훅을 사용하여 form action에 사용했던 함수를 첫번째 인자로 담아주고,  
+두번째 인자로는 초기 값을 작성해 준다.
+
+그런 후, 해당 훅은 3가지 값 state, formAction, isPending 과 같은 값을 반환한다.
+
+formAction을 form에 담아주고 formAction이 실행되면 state 값과 isPending 이라는 값으로 상태를 관리할 수 있다.
+
+```
+export default function ReviewEditor({ bookId }: { bookId: string }) {
+  const [state, formAction, isPending] = useActionState(createReviewAction, null);
+
+  return (
+    <section>
+      <form className={styles.form_container} action={formAction}>
+        <input name="bookId" value={bookId} hidden readOnly />
+        <textarea name="content" placeholder="리뷰 내용" required />
+        <div className={styles.submit_container}>
+          <input name="author" placeholder="작성자" required />
+          <button type="submit">작성하기</button>
+        </div>
+      </form>
+    </section>
+  );
+}
+```
+
+state는 해당 formAction에 사용된 함수에서 반환된 데이터를 확인할 수 있다.
+
+예를 들어, formAction에서 오류가 발생하여 { status: false, error: "리뷰 내용을 입력햊 주세요." } 라는  
+메세지를 반환한 경우 state 값으로 확인할 수 있다는 것이다.
+
+그리고 isPending은 보이는 의미대로 현재 진행상태를 알려주는 것이다.
+
+따라서 해당 액션 함수에서 status 값과 error 메세지를 반환하면 state 값으로 확인이 가능하고,  
+해당 값으로 사용자에게 어떤 문제가 발생하였는 지 혹은 개발 중에 에러 메세지를 편리하게 확인해 볼 수 있는 기능을 만들 수 있다.
+
+## Parallel Route ( 병렬 라우트 )
+
+하나의 화면 안에 여러 개의 페이지를 병렬로 렌더링해 주는 패턴이다.  
+여기서 페이지란 흔히 말하는 컴포넌트가 아닌 page.tsx 로 쓰이는 화면을 병렬로 렌더링해 주는 기술이라고 보면 된다.  
+보통 이런 것은 복잡한 내용의 구조를 가진 사이트에서 유용하게 사용될 수 있다.
+
+parallel 환경을 구축하기 위해서는 먼저 하나의 페이지를 작성해 주어야 한다. 예시 참고
+
+1. src > app > parallel
+2. src > app > parallel > page.tsx
+3. src > app > parallel > layout.tsx
+4. Parallel을 적용한 Slot을 만들어 준다.
+   - Slot : @ 기호가 붙고 병렬로 렌더링될 페이지 컴포넌트를 보관하는 폴더이다.
+   - 이렇게 만들어진 Slot은 상위 폴더에 layout.tsx props로 전달이 된다. ( props 명은 앞서 작성한 이름으로 )
+
+주의 : Next의 버그로 보이지 않을 수 있으니, .next 파일을 제거하고 다시 개발 모드로 실행하면 정상적으로 보임.
+
+그리고 Slot은 추가적으로 제공될 페이지를 보관하는 폴더로서 주소로 직접 들어가도 화면이 보이지는 않으며, 얼마든지 만들어도 된다.
+
+## Intercepting Route
+
+사용자가 특정 경로로 접속해서 새로운 페이지를 요청할 때 그 요청을 가로채서 원하는 페이지를 렌더링하는 것을 말한다.  
+즉, 동일한 경로로 접속하여도 특정 조건을 만족하면 다른 페이지를 보여주는 것이다.
+
+여기서 접속은 초기 접속이 아닌 경우, 인터셉팅 라우터가 동작하게 된다.
+
+예를 들어, 인스타그램에서 게시글을 클릭하면 모달 팝업 형태로 나와 쉽게 뒤로가기가 가능하지만,  
+해당 상태에서 새로고침을 하게 되면 원래 게시글 리스트 페이지가 아닌 모달 팝업에 있던 내용이 담긴 게시글 페이지로 이동하게 되는 것으로 설명할 수 있다.
