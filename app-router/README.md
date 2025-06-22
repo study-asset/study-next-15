@@ -644,3 +644,16 @@ parallel 환경을 구축하기 위해서는 먼저 하나의 페이지를 작�
 
 react, next 에서는 useRef 훅으로 엘리먼트 핸들링이 가능하다.
 생성된 ref 값을 해당 dialog에 ref props로 전달해 주고, dialog ref 안에 showModal로 제어가 가능하다.
+
+## Parallel Router와 Intercepting Route 혼합하여 병렬적인 화면 만들기
+
+패럴렐 라우트의 slot 기능을 활용하여 병렬 처리될 layout.tsx와 엮고,  
+인터셉팅 라우터를 활용하여 가로챈 페이지를 패럴렐 라우트 하위에 작성해 준다.
+
+이후, layout.tsx에서 slot 을 가져와 children과 렌더링 해 주고,  
+default.tsx를 활용하여 404 페이지를 방지한다.
+
+이와 같이 혼합하여 사용한다면 modal과 같은 컴포넌트를 만들더라도  
+병렬로 처리한다면 뒤에 연결된 페이지와 현재 띄워진 모달의 상태의 싱크를 맞출 수 있다.
+
+즉, 병렬로 화면을 보여주기에 이전과 다른 페이지를 보여주는 문제는 발생하지 않게 된다.
