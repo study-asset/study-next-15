@@ -481,3 +481,28 @@ router의 refresh는 반환하는 값이 없는 비동기적 함수이다.
 ## Error 컴포넌트 덮어씌우기
 
 Error 컴포넌트가 상위와 하위에 존재할 경우, 하위는 상위 Error 컴포넌트를 덮어씌워 사용하게 된다.
+
+## 서버 액션
+
+브라우저에서 호출할 수 있는 서버에서 실행되는 비동기 함수이다.
+
+```
+export default function Page() {
+   const saveName = async (formData: FormData) => {
+      "use server"
+
+      const name = formData.get("name");
+      // sql 쿼리문 실행 혹은 DB에 직접 입력 가능
+   };
+
+   return (
+      <form action={saveName}>
+         <input name="name" placeHolder="이름을 입력해 주세요." />
+         <button type="submit">제출</button>
+      </from>
+   )
+}
+```
+
+action props인 saveName을 실행할 경우, "use server" 를 통해 Next 서버에서 실행되는 서버 액션을 사용할 수 있다.  
+따라서, 서버에서 실행되는 코드로 서버에서만 처리가 가능한 DB 액션 혹은 SQL 쿼리문 실행이 가능해진다.
