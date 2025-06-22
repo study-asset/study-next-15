@@ -415,4 +415,69 @@ Suspense는 첫 렌더링에 딜레이가 발생할 경우, fallback 을 띄우�
 스켈레톤 UI는 뼈대 역할을 하는 UI이며, 로딩되지 않은 컨텐츠 대신 실루엣을 미리 보여주는 것을 말한다.  
 "대충 이런 UI가 나타날 예정이구나" 라는 느낌으로 사용자에게 전달할 수 있다.
 
-## Suspense 에러 핸들링
+## Error file-system
+
+fetch 를 실행하던 도중 서버에 문제가 발생하거나, 코드 측에서 URL이 잘못된 경우에 에러 핸들링이 가능하다.  
+그게 Next에서 제공하는 파일 시스템 중 하나인 Error 컴포넌트를 사용하는 것이다.
+
+하지만, 이 에러 컴포넌트를 사용하기 위해서 서버에서나 클라이언트에서나 에러가 발생한 모든 상황에 대해  
+대응이 가능하도록 클라이언트 컴포넌트로서 동작하도록 설정해 줄 필요가 있다.
+
+```
+{any-folders}/error.tsx
+
+"use client"
+
+export default function Error() {
+   return <div>에러가 발생하였습니다.</div>
+}
+```
+
+여기서 Error 컴포넌트는 error와 reset 매개변수를 제공하는데,  
+error는 Error의 타입으로 reset은 매개변수와 반환하는 값이 없는 동작을 하는 함수이다.
+
+이렇게 각 값에 대한 error 핸들링과 reset을 통해 다시 요청을 시도 할 수 있다.  
+하지만 reset은 서버 컴포넌트를 다시 실행해 보는 것이 아닌 렌더링만 다시 시도하는 것이기에 주의해야 한다.
+
+## startTransition 활용하여 router.refresh 사용하기
+
+```
+"use client";
+
+import { startTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+export default async function Error({ error, reset }: { error: Error; reset: () => void }) {
+  const router = useRouter();
+
+  useEffect(() => {
+    console.log(error.message);
+  }, [error]);
+
+  return (
+    <div>
+      <h3>오류가 발생했습니다</h3>
+      <button
+        onClick={() => {
+          startTransition(() => {
+            router.refresh();
+            reset();
+          });
+        }}
+      >
+        다시 시도
+      </button>
+    </div>
+  );
+}
+
+```
+
+router의 refresh는 반환하는 값이 없는 비동기적 함수이다.  
+이 경우, 아직 데이터 로드를 못한 상태에서 reset() 함수가 동작하는데, 그대로 오류가 나올 수 있다.
+
+해결 방법은 startTransition을 통해 하나의 콜백 함수 안에 있는 동작을 일괄적으로 처리하여 해결할 수 있다.
+
+## Error 컴포넌트 덮어씌우기
+
+Error 컴포넌트가 상위와 하위에 존재할 경우, 하위는 상위 Error 컴포넌트를 덮어씌워 사용하게 된다.
