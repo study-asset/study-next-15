@@ -1,15 +1,13 @@
 import style from "./page.module.css";
 
 import { Suspense } from "react";
+import { Metadata } from "next";
 
 import BookItem from "@/components/book-item";
 import BookListSkeleton from "@/components/skeleton/book-list-skeleton";
 
 import { BookData } from "@/types";
 import { delay } from "@/utils/delay";
-
-export const dynamic = "force-dynamic";
-// 특정 페이지의 유형을 강제로 Static, Dynamic 페이지로 설정
 
 async function AllBooks() {
   await delay(1.5);
@@ -55,20 +53,34 @@ async function RecoBooks() {
   );
 }
 
+// export const dynamic = "force-dynamic";
+// 특정 페이지의 유형을 강제로 Static, Dynamic 페이지로 설정
+
+export const metadata: Metadata = {
+  title: "한입 북스",
+  description: "한입 북스에 등록된 도서를 만나보세요.",
+  openGraph: {
+    title: "한입 북스",
+    description: "한입 북스에 등록된 도서를 만나보세요.",
+    images: ["/thumbnail.png"],
+  },
+};
+
 export default function Home() {
   return (
     <div className={style.container}>
       <section>
         <h3>지금 추천하는 도서</h3>
-        <Suspense fallback={<BookListSkeleton count={3} />}>
-          <RecoBooks />
-        </Suspense>
+        {/* <Suspense fallback={<BookListSkeleton count={3} />}> */}{" "}
+        {/* dynamic 형태가 아니기에 주석처리 */}
+        <RecoBooks />
+        {/* </Suspense> */}
       </section>
       <section>
         <h3>지금 추천하는 도서</h3>
-        <Suspense fallback={<BookListSkeleton count={10} />}>
-          <AllBooks />
-        </Suspense>
+        {/* <Suspense fallback={<BookListSkeleton count={10} />}> */}
+        <AllBooks />
+        {/* </Suspense> */}
       </section>
     </div>
   );
