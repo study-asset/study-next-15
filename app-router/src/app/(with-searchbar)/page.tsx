@@ -77,7 +77,7 @@ export default function Home() {
         {/* </Suspense> */}
       </section>
       <section>
-        <h3>지금 추천하는 도서</h3>
+        <h3>등록된 모든 도서</h3>
         {/* <Suspense fallback={<BookListSkeleton count={10} />}> */}
         <AllBooks />
         {/* </Suspense> */}
